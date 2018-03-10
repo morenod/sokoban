@@ -197,7 +197,7 @@ class game:
                 self.set_content(current[0]+x,current[1]+y,'+')
                 if save: self.queue.put((x,y,True))
 
-def print_game(matrix):
+def print_game(matrix,screen):
     screen.fill(background)
     x = 0
     y = 0
@@ -246,6 +246,22 @@ def display_box(screen, message):
                 ((screen.get_width() / 2) - 100, (screen.get_height() / 2) - 10))
   pygame.display.flip()
 
+def display_end(screen):
+    message = "Level Completed"
+    fontobject = pygame.font.Font(None,18)
+    pygame.draw.rect(screen, (0,0,0),
+                   ((screen.get_width() / 2) - 100,
+                    (screen.get_height() / 2) - 10,
+                    200,20), 0)
+    pygame.draw.rect(screen, (255,255,255),
+                   ((screen.get_width() / 2) - 102,
+                    (screen.get_height() / 2) - 12,
+                    204,24), 1)
+    screen.blit(fontobject.render(message, 1, (255,255,255)),
+                ((screen.get_width() / 2) - 100, (screen.get_height() / 2) - 10))
+    pygame.display.flip()
+
+
 def ask(screen, question):
   "ask(screen, question) -> answer"
   pygame.font.init()
@@ -264,13 +280,14 @@ def ask(screen, question):
     display_box(screen, question + ": " + string.join(current_string,""))
   return string.join(current_string,"")
 
-start = pygame.display.set_mode((320,240))
-level = ask(start,"Select Level")
-if level > 0:
-    game = game('levels',level)
-else:
-    print "ERROR: Invalid Level: "+str(level)
-    sys.exit(2)
+def start_game():
+    start = pygame.display.set_mode((320,240))
+    level = ask(start,"Select Level")
+    if level > 0:
+        return level
+    else:
+        print "ERROR: Invalid Level: "+str(level)
+        sys.exit(2)
 
 wall = pygame.image.load('images/wall.png')
 floor = pygame.image.load('images/floor.png')
@@ -281,20 +298,21 @@ worker_docked = pygame.image.load('images/worker_dock.png')
 docker = pygame.image.load('images/dock.png')
 background = 255, 226, 191
 pygame.init()
+
+level = start_game()
+game = game('levels',level)
 size = game.load_size()
 screen = pygame.display.set_mode(size)
-
-done = False
-while not done:
-    if game.is_completed(): done = True
-    print_game(game.get_matrix())
+while 1:
+    if game.is_completed(): display_end(screen)
+    print_game(game.get_matrix(),screen)
     for event in pygame.event.get():
-        if event.type == pygame.QUIT: done = True
+        if event.type == pygame.QUIT: sys.exit(0)
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_UP: game.move(0,-1, True)
             elif event.key == pygame.K_DOWN: game.move(0,1, True)
             elif event.key == pygame.K_LEFT: game.move(-1,0, True)
             elif event.key == pygame.K_RIGHT: game.move(1,0, True)
-            elif event.key == pygame.K_q: done = True
+            elif event.key == pygame.K_q: sys.exit(0)
             elif event.key == pygame.K_d: game.unmove()
     pygame.display.update()
